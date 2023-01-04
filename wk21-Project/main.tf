@@ -22,21 +22,18 @@ provider "aws" {
   region = var.region
 }
 
-# Configure the VPC
-resource "aws_default_vpc" "default_vpc" {
+resource "aws_default_vpc" "default" {
   tags = {
-    Name = "default_vpc"
+    Name = "default vpc"
   }
 }
 
-# Create a subnet in each availability zone in the VPC. Keep in mind that at this point these subnets are private without internet access. They would need other networking resources for making them accesible
-resource "aws_default_subnet" "default_subnet" {
-  count                   = length(var.availability_zones)
-  availability_zone       = var.availability_zones[count.index]
-  map_public_ip_on_launch = true
+resource "aws_default_subnet" "default_az" {
+  count             = length(var.availability_zones)
+  availability_zone = var.availability_zones[count.index]
 
   tags = {
-    Name = "default_subnet-${count.index}"
+    Name = "default_az-${count.index}"
   }
 }
 
@@ -44,10 +41,9 @@ resource "aws_default_subnet" "default_subnet" {
 resource "aws_security_group" "webserver_sg" {
   name        = "allow_http"
   description = "Allow http inbound traffic"
-  vpc_id      = aws_default_vpc.default_vpc.id
+  vpc_id      = "vpc-01f6de57abadb0d40"
 
   ingress {
-    description = "from my ip range"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
@@ -55,7 +51,6 @@ resource "aws_security_group" "webserver_sg" {
   }
 
   ingress {
-    description = "from my ip range"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
@@ -77,7 +72,7 @@ resource "aws_instance" "web_server" {
   instance_type          = "t2.micro"
   vpc_security_group_ids = [aws_security_group.webserver_sg.id]
   key_name               = "wk21_keypair"
-  subnet_id              = aws_default_subnet.default_subnet[count.index].id
+  subnet_id              = aws_default_subnet.default_az[count.index].id
 
   user_data = <<-EOF
     #!/bin/bash

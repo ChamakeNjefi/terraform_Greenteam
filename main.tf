@@ -1,3 +1,4 @@
+
 terraform {
   required_providers {
     docker = {
@@ -63,5 +64,15 @@ output "container-name2" {
   value       = docker_container.nodered_container2.name
   description = "name of the container"
 
+}
+
+resource "null_resource" "mk" {
+  provisioner "local-exec" {
+    command = "echo '0' > status.txt"
+  }
+  provisioner "local-exec" {
+    when    = destroy
+    command = "echo '1' > status.txt"
+  }
 }
 

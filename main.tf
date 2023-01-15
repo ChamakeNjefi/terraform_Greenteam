@@ -6,15 +6,6 @@ resource "null_resource" "dockervol" {
 }
 }
 
-terraform {
-  required_providers {
-    docker = {
-      source  = "kreuzwerker/docker"
-      version = "2.24.0"
-    }
-  }
-}
-
 module "image" {
   source   = "./image"
   image_in = var.image[terraform.workspace]

@@ -1,4 +1,11 @@
 
+# --- Root --- #
+resource "null_resource" "dockervol" {
+  provisioner "local-exec" {
+    command = "mkdir noderedvol/ || true && sudo chown -R 1000:1000 noderedvol/"
+}
+}
+
 terraform {
   required_providers {
     docker = {
@@ -8,63 +15,38 @@ terraform {
   }
 }
 
-provider "docker" {}
-
-resource "docker_image" "nodered_image" {
-  name = "nodered/node-red:latest"
+module "image" {
+  source   = "./image"
+  image_in = var.image[terraform.workspace]
 }
 
 resource "random_string" "random" {
-    length = 4
-    special = false
-    upper = false 
-}
-
-resource "random_string" "random2" {
-    length = 4
-    special = false
-    upper = false
+  count   = local.container_count
+  length  = 4
+  special = false
+  upper   = false
 }
 
 resource "docker_container" "nodered_container" {
-  name  = join("-", ["nodered", random_string.random.result])
-  image = docker_image.nodered_image.latest
+  count = local.container_count
+  name  = join("-", ["nodered", terraform.workspace, random_string.random[count.index].result])
+  image = module.image.image_out
   ports {
-    internal = 1880
-    # external = 1880
+    internal = var.int_port
+    external = var.ext_port[terraform.workspace][count.index]
+  }
+
+  volumes {
+    container_path = "/data"
+    host_path      = "${path.cwd}/noderedvol"
   }
 }
 
-resource "docker_container" "nodered_container2" {
-  name  = join("-", ["nodered2", random_string.random2.result])
-  image = docker_image.nodered_image.latest
-  ports {
-    internal = 1880
-    # external = 1880
-  }
-}
 
-output "IP-Address" {
-  value       = join(":", [docker_container.nodered_container.ip_address, docker_container.nodered_container.ports[0].external])
-  description = "ip address and external port of the container"
-}
 
-output "container-name" {
-  value       = docker_container.nodered_container.name
-  description = "name of the container"
 
-}
 
-output "IP-Address2" {
-  value       = join(":", [docker_container.nodered_container2.ip_address, docker_container.nodered_container2.ports[0].external])
-  description = "ip address and external port of the container"
-}
 
-output "container-name2" {
-  value       = docker_container.nodered_container2.name
-  description = "name of the container"
-
-}
 
 resource "null_resource" "mk" {
   provisioner "local-exec" {

@@ -1,70 +1,39 @@
-terraform {
-  required_providers {
-    docker = {
-      source  = "kreuzwerker/docker"
-      version = "2.24.0"
-    }
+
+# --- Root --- #
+resource "null_resource" "dockervol" {
+  provisioner "local-exec" {
+    command = "mkdir noderedvol/ || true && sudo chown -R 1000:1000 noderedvol/"
   }
 }
 
-provider "docker" {}
-
-variable "ext_port" {
-    type    = number
-    default = 1880
-    
-    validation {
-      condition = var.ext_port <= 65535 && var.ext_port > 0 
-      error_message = "The external port must be in the valid port range."
-      }
-}
-
-variable "int_port" {
-    type    = number
-    default = 1880
-
-    validation {
-      condition = var.int_port == 1880
-      error_message = "The internal port must be 1880."
-      }
-}
-
-variable "container_count" {
-    type    = number
-    default = 1
-}
-
-resource "docker_image" "nodered_image" {
-  name = "nodered/node-red:latest"
+module "image" {
+  source   = "./image"
+  image_in = var.image[terraform.workspace]
 }
 
 resource "random_string" "random" {
-    count = var.container_count
-    length = 4
-    special = false
-    upper = false 
+  count   = local.container_count
+  length  = 4
+  special = false
+  upper   = false
 }
 
- resource "docker_container" "nodered_container" {
-  count = var.container_count
-  name  = join("-", ["nodered", random_string.random[count.index].result])
-  image = docker_image.nodered_image.latest
+resource "docker_container" "nodered_container" {
+  count = local.container_count
+  name  = join("-", ["nodered", terraform.workspace, random_string.random[count.index].result])
+  image = module.image.image_out
   ports {
     internal = var.int_port
-    external = var.ext_port
+    external = var.ext_port[terraform.workspace][count.index]
+  }
+
+  volumes {
+    container_path = "/data"
+    host_path      = "${path.cwd}/noderedvol"
   }
 }
 
-output "IP-Address" {
- value       = [for i in docker_container.nodered_container[*]: join(":", [i.ip_address], i.ports[*]["external"])]
- description = "ip address and external port of the container"
-}
 
-output "container-name" {
- value       = docker_container.nodered_container[*].name
- description = "name of the container"
-
-}
 
 
 

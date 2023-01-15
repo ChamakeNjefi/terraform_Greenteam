@@ -3,6 +3,15 @@
 resource "null_resource" "dockervol" {
   provisioner "local-exec" {
     command = "mkdir noderedvol/ || true && sudo chown -R 1000:1000 noderedvol/"
+}
+}
+
+terraform {
+  required_providers {
+    docker = {
+      source  = "kreuzwerker/docker"
+      version = "2.24.0"
+    }
   }
 }
 
@@ -38,4 +47,14 @@ resource "docker_container" "nodered_container" {
 
 
 
+
+resource "null_resource" "mk" {
+  provisioner "local-exec" {
+    command = "echo '0' > status.txt"
+  }
+  provisioner "local-exec" {
+    when    = destroy
+    command = "echo '1' > status.txt"
+  }
+}
 

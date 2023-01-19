@@ -1,0 +1,8 @@
+nodered-dev-ptgl: 172.17.0.2:1980
+influxdb-dev-eyhh: 172.17.0.3:8186
+grafana-dev-6syk: 172.17.0.4:3031
+grafana-dev-pa8n: 172.17.0.2:3031
+grafana-dev-cljh: 172.17.0.2:3031
+influxdb-dev-mgbq: 172.17.0.2:8186
+nodered-dev-05k4: 172.17.0.3:1980
+grafana-dev-cljh: 172.17.0.4:3031

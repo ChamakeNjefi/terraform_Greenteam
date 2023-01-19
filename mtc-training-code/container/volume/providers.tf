@@ -1,4 +1,4 @@
-#--- Child/Image---#
+#--- Child/volume ---#
 
 terraform {
   required_providers {
@@ -7,9 +7,3 @@ terraform {
     }
   }
 }
-
-
-
-
-
-

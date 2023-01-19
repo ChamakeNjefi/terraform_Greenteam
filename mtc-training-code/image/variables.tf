@@ -1,4 +1,4 @@
 #--- Child---#
 variable "image_in" {
-    description = "name of image"
+  description = "name of image"
 }
